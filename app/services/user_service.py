@@ -203,3 +203,13 @@ class UserService:
         except Exception as e:
             logger.error(f"Error updating profile: {e}")
             return None
+
+    @classmethod
+    async def upgrade_to_professional(cls, session: AsyncSession, user_id: UUID) -> Optional[User]:
+        user = await cls.get_by_id(session, user_id)
+        if user:
+            user.is_professional = True
+            session.add(user)
+            await session.commit()
+            return user
+        return None
