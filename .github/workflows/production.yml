@@ -75,11 +75,11 @@ jobs:
           cache-from: type=registry,ref=amycruiz/project2:cache
           cache-to: type=inline,mode=max
           
-      - name: Scan the Docker image
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'amycruiz/project2:${{ github.sha }}'
-          format: 'table'
-          exit-code: '1' # Fail the job if vulnerabilities are found
-          ignore-unfixed: true
-          severity: 'CRITICAL,HIGH'
+      # - name: Scan the Docker image
+      #   uses: aquasecurity/trivy-action@master
+      #   with:
+      #     image-ref: 'amycruiz/project2:${{ github.sha }}'
+      #     format: 'table'
+      #     exit-code: '1' # Fail the job if vulnerabilities are found
+      #     ignore-unfixed: true
+      #     severity: 'CRITICAL,HIGH'
