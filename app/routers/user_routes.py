@@ -108,6 +108,18 @@ async def update_user(user_id: UUID, user_update: UserUpdate, request: Request, 
         links=create_user_links(updated_user.id, request)
     )
 
+@router.put("/users/{user_id}/profile", response_model=UserResponse)
+async def update_profile(user_id: UUID, profile_data: UserUpdate, session: AsyncSession = Depends(get_db)):
+    """
+    Endpoint to update user profile information.
+    
+    - **user_id**: UUID of the user whose profile needs to be updated.
+    - **profile_data**: The updated profile information.
+    """
+    updated_user = await UserService.update_profile(session, user_id, profile_data.dict())
+    if updated_user:
+        return updated_user
+    raise HTTPException(status_code=400, detail="Profile update failed")
 
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT, name="delete_user", tags=["User Management Requires (Admin or Manager Roles)"])
 async def delete_user(user_id: UUID, db: AsyncSession = Depends(get_db), token: str = Depends(oauth2_scheme), current_user: dict = Depends(require_role(["ADMIN", "MANAGER"]))):
