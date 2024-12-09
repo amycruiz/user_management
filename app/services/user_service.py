@@ -11,6 +11,7 @@ from app.models.user_model import User
 from app.schemas.user_schemas import UserCreate, UserUpdate
 from app.utils.nickname_gen import generate_nickname
 from app.utils.security import generate_verification_token, hash_password, verify_password
+from app.utils.template_manager import TemplateManager
 from uuid import UUID
 from app.services.email_service import EmailService
 from app.models.user_model import UserRole
@@ -211,5 +212,11 @@ class UserService:
             user.is_professional = True
             session.add(user)
             await session.commit()
+            email_service = EmailService(TemplateManager())
+            try: 
+                await email_service.send_user_email({"name": user.first_name, "email": user.email}, "professional_upgrade")
+            except Exception as e:
+                print(f"Error sending email: {e}")
+                return user
             return user
         return None
