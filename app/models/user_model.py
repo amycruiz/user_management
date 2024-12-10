@@ -76,7 +76,7 @@ class User(Base):
     location: Mapped[str] = Column(String(255), nullable=True)
 
     @validates("is_professional")
-    def validate_is_professional(self, key, value):
+    def validate_is_professional(self, value):
         if not isinstance(value, bool):
             raise ValueError("is_professional must be a boolean value")
         return value
