@@ -1,6 +1,7 @@
 from builtins import str
 import pytest
 from httpx import AsyncClient
+from conftest import async_client
 from app.main import app
 from app.models.user_model import User, UserRole
 from app.utils.nickname_gen import generate_nickname
@@ -190,3 +191,29 @@ async def test_list_users_unauthorized(async_client, user_token):
         headers={"Authorization": f"Bearer {user_token}"}
     )
     assert response.status_code == 403  # Forbidden, as expected for regular user
+
+@pytest.mark.asyncio
+async def test_update_profile_success(auth_client, sample_user):
+    """Test updating a user profile successfully."""
+    response = await auth_client.put(f"/users/{sample_user.id}/profile", json={"location": "San Francisco, USA"})
+    assert response.status_code == 200
+    assert response.json()["location"] == "San Francisco, USA"
+
+@pytest.mark.asyncio
+async def test_update_profile_invalid_input(auth_client, sample_user):
+    """Test updating a user profile with invalid input."""
+    response = await auth_client.put(f"/users/{sample_user.id}/profile", json={"is_professional": "not_a_boolean"})
+    assert response.status_code == 400
+
+@pytest.mark.asyncio
+async def test_upgrade_to_professional_success(auth_admin_client, sample_user):
+    """Test upgrading a user to professional status with admin privileges."""
+    response = await auth_admin_client.put(f"/users/{sample_user.id}/upgrade")
+    assert response.status_code == 200
+    assert response.json()["is_professional"] is True
+
+@pytest.mark.asyncio
+async def test_upgrade_to_professional_permission_denied(auth_client, sample_user):
+    """Test upgrading a user to professional status without sufficient permissions."""
+    response = await auth_client.put(f"/users/{sample_user.id}/upgrade")
+    assert response.status_code == 403
