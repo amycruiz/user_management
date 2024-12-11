@@ -1,18 +1,3 @@
-"""
-File: test_database_operations.py
-
-Overview:
-This Python test file utilizes pytest to manage database states and HTTP clients for testing a web application built with FastAPI and SQLAlchemy. It includes detailed fixtures to mock the testing environment, ensuring each test is run in isolation with a consistent setup.
-
-Fixtures:
-- `async_client`: Manages an asynchronous HTTP client for testing interactions with the FastAPI application.
-- `db_session`: Handles database transactions to ensure a clean database state for each test.
-- User fixtures (`user`, `locked_user`, `verified_user`, etc.): Set up various user states to test different behaviors under diverse conditions.
-- `token`: Generates an authentication token for testing secured endpoints.
-- `initialize_database`: Prepares the database at the session start.
-- `setup_database`: Sets up and tears down the database before and after each test.
-"""
-
 # Standard library imports
 from builtins import Exception, range, str
 from datetime import timedelta
@@ -103,6 +88,8 @@ async def locked_user(db_session):
         "email_verified": False,
         "is_locked": True,
         "failed_login_attempts": settings.max_login_attempts,
+        "location": "Los Angeles, USA",  # Added location
+        "is_professional": False,  # Added is_professional
     }
     user = User(**user_data)
     db_session.add(user)
@@ -120,6 +107,8 @@ async def user(db_session):
         "role": UserRole.AUTHENTICATED,
         "email_verified": False,
         "is_locked": False,
+        "location": "New York, USA",  # Added location
+        "is_professional": False,  # Added is_professional
     }
     user = User(**user_data)
     db_session.add(user)
@@ -137,6 +126,8 @@ async def verified_user(db_session):
         "role": UserRole.AUTHENTICATED,
         "email_verified": True,
         "is_locked": False,
+        "location": "San Francisco, USA",  # Added location
+        "is_professional": False,  # Added is_professional
     }
     user = User(**user_data)
     db_session.add(user)
@@ -154,6 +145,8 @@ async def unverified_user(db_session):
         "role": UserRole.AUTHENTICATED,
         "email_verified": False,
         "is_locked": False,
+        "location": "Chicago, USA",  # Added location
+        "is_professional": False,  # Added is_professional
     }
     user = User(**user_data)
     db_session.add(user)
@@ -173,6 +166,8 @@ async def users_with_same_role_50_users(db_session):
             "role": UserRole.AUTHENTICATED,
             "email_verified": False,
             "is_locked": False,
+            "location": "Dallas, USA",  # Added location
+            "is_professional": False,  # Added is_professional
         }
         user = User(**user_data)
         db_session.add(user)
@@ -190,6 +185,8 @@ async def admin_user(db_session: AsyncSession):
         hashed_password="securepassword",
         role=UserRole.ADMIN,
         is_locked=False,
+        location="Admin City, USA",  # Added location
+        is_professional=True,  # Added is_professional
     )
     db_session.add(user)
     await db_session.commit()
@@ -205,6 +202,8 @@ async def manager_user(db_session: AsyncSession):
         hashed_password="securepassword",
         role=UserRole.MANAGER,
         is_locked=False,
+        location="Manager City, USA",  # Added location
+        is_professional=False,  # Added is_professional
     )
     db_session.add(user)
     await db_session.commit()
