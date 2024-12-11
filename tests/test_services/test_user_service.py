@@ -5,7 +5,8 @@ from app.dependencies import get_settings
 from app.models.user_model import User, UserRole
 from app.services.user_service import UserService
 from app.utils.nickname_gen import generate_nickname
-
+from tests.conftest import async_client, email_service
+from uuid import uuid4
 pytestmark = pytest.mark.asyncio
 
 # Test creating a user with valid data
@@ -161,3 +162,65 @@ async def test_unlock_user_account(db_session, locked_user):
     assert unlocked, "The account should be unlocked"
     refreshed_user = await UserService.get_by_id(db_session, locked_user.id)
     assert not refreshed_user.is_locked, "The user should no longer be locked"
+
+async def test_upgrade_to_professional_valid_role(db_session, admin_user):
+    user_data = {
+        "nickname": "john_doe",
+        "email": "john.doe@example.com",
+        "password": "SecurePassword123!",
+        "role": UserRole.AUTHENTICATED
+    }
+    user = await UserService.create(db_session, user_data, email_service)
+    upgraded_user = await UserService.upgrade_to_professional(db_session, user.id)
+    assert upgraded_user is not None
+    assert upgraded_user.is_professional is True
+
+async def test_upgrade_to_professional_insufficient_permissions(db_session, user_token, user):
+    user_data = {
+        "nickname": "jane_doe",
+        "email": "jane.doe@example.com",
+        "password": "SecurePassword123!",
+        "role": UserRole.AUTHENTICATED
+    }
+    user_to_upgrade = await UserService.create(db_session, user_data, email_service)
+    response = await async_client.put(
+        f"/users/{user_to_upgrade.id}/upgrade", headers={"Authorization": f"Bearer {user_token}"}
+    )
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Insufficient permissions"
+
+async def test_upgrade_to_professional_user_not_found(db_session, admin_token):
+    non_existent_user_id = str(uuid4())
+    response = await async_client.put(
+        f"/users/{non_existent_user_id}/upgrade", headers={"Authorization": f"Bearer {admin_token}"}
+    )
+    assert response.status_code == 404
+    assert response.json()["detail"] == "User not found"
+
+async def test_upgrade_to_professional_user_already_professional(db_session, admin_token):
+    user_data = {
+        "nickname": "mike_doe",
+        "email": "mike.doe@example.com",
+        "password": "SecurePassword123!",
+        "role": UserRole.PROFESSIONAL
+    }
+    user = await UserService.create(db_session, user_data, email_service)
+    response = await async_client.put(
+        f"/users/{user.id}/upgrade", headers={"Authorization": f"Bearer {admin_token}"}
+    )
+    assert response.status_code == 200
+    assert response.json()["role"] == UserRole.PROFESSIONAL.name
+
+async def test_upgrade_to_professional_without_token(db_session, user):
+    user_data = {
+        "nickname": "charlie_doe",
+        "email": "charlie.doe@example.com",
+        "password": "SecurePassword123!",
+        "role": UserRole.AUTHENTICATED
+    }
+    user_to_upgrade = await UserService.create(db_session, user_data, email_service)
+    response = await async_client.put(
+        f"/users/{user_to_upgrade.id}/upgrade"
+    )
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Not authenticated"
