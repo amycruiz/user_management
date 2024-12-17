@@ -237,3 +237,9 @@ def email_service():
         mock_service.send_verification_email.return_value = None
         mock_service.send_user_email.return_value = None
         return mock_service
+
+@pytest.fixture(scope="function")
+async def auth_client(async_client, user_token):
+    """Fixture to provide an authenticated client."""
+    async_client.headers = {"Authorization": f"Bearer {user_token}"}
+    return async_client

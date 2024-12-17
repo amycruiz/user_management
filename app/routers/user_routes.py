@@ -30,6 +30,7 @@ from app.schemas.token_schema import TokenResponse
 from app.schemas.user_schemas import LoginRequest, UserBase, UserCreate, UserListResponse, UserResponse, UserUpdate
 from app.services.user_service import UserService
 from app.services.jwt_service import create_access_token
+from app.services.email_service import TemplateManager, EmailService
 from app.utils.link_generation import create_user_links, generate_pagination_links
 from app.dependencies import get_settings
 from app.services.email_service import EmailService
@@ -110,27 +111,30 @@ async def update_user(user_id: UUID, user_update: UserUpdate, request: Request, 
         links=create_user_links(updated_user.id, request)
     )
 
-@router.put("/users/{user_id}/profile", response_model=UserResponse)
-async def update_profile(user_id: UUID, profile_data: UserUpdate, session: AsyncSession = Depends(get_db)):
-    """
-    Endpoint to update user profile information.
-    
-    - **user_id**: UUID of the user whose profile needs to be updated.
-    - **profile_data**: The updated profile information.
-    """
-    updated_user = await UserService.update_profile(session, user_id, profile_data.dict())
-    if updated_user:
-        return updated_user
-    raise HTTPException(status_code=400, detail="Profile update failed")
-
-@router.put("/users/{user_id}/upgrade", response_model=UserResponse)
-async def upgrade_to_professional(user_id: UUID, session: AsyncSession = Depends(get_db), current_user: dict = Depends(get_current_user)):
+@router.put("/users/{user_id}/upgrade", response_model=UserResponse, tags=["Admin Profile Management"])
+async def upgrade_to_professional(user_id: UUID, db: AsyncSession = Depends(get_db), current_user: dict = Depends(require_role(["ADMIN", "MANAGER"])), email_service: EmailService = Depends(TemplateManager.get_email_service)):  # Inject EmailService
+    # Check if current user has permission
     if current_user["role"] not in [UserRole.ADMIN, UserRole.MANAGER]:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
-    upgraded_user = await UserService.upgrade_to_professional(session, user_id)
-    if upgraded_user:
-        return upgraded_user
-    raise HTTPException(status_code=404, detail="User not found")
+
+    # Attempt to upgrade the user
+    upgraded_user = await UserService.upgrade_to_professional(db, user_id)
+    if not upgraded_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Prepare email data and send email notification
+    email_data = {
+        "name": upgraded_user.first_name,
+        "email": upgraded_user.email,
+    }
+    try:
+        await email_service.send_user_email(email_data, 'professional_upgrade')
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"User upgraded but failed to send email: {str(e)}"
+        )
+    return upgraded_user
 
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT, name="delete_user", tags=["User Management Requires (Admin or Manager Roles)"])
 async def delete_user(user_id: UUID, db: AsyncSession = Depends(get_db), token: str = Depends(oauth2_scheme), current_user: dict = Depends(require_role(["ADMIN", "MANAGER"]))):
@@ -176,9 +180,12 @@ async def create_user(user: UserCreate, request: Request, db: AsyncSession = Dep
         first_name=created_user.first_name,
         last_name=created_user.last_name,
         profile_picture_url=created_user.profile_picture_url,
+        linkedin_profile_url=created_user.linkedin_profile_url,
+        github_profile_url=created_user.github_profile_url,
         nickname=created_user.nickname,
         email=created_user.email,
         role=created_user.role,
+        location=created_user.location,
         last_login_at=created_user.last_login_at,
         created_at=created_user.created_at,
         updated_at=created_user.updated_at,

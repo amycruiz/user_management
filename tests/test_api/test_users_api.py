@@ -4,6 +4,7 @@ from httpx import AsyncClient
 from tests.conftest import async_client
 from app.main import app
 from app.models.user_model import User, UserRole
+from app.services.user_service import UserService
 from app.utils.nickname_gen import generate_nickname
 from app.utils.security import hash_password
 from app.services.jwt_service import decode_token  # Import your FastAPI app
@@ -193,27 +194,47 @@ async def test_list_users_unauthorized(async_client, user_token):
     assert response.status_code == 403  # Forbidden, as expected for regular user
 
 @pytest.mark.asyncio
-async def test_update_profile_success(auth_client, sample_user):
-    """Test updating a user profile successfully."""
-    response = await auth_client.put(f"/users/{sample_user.id}/profile", json={"location": "San Francisco, USA"})
+async def test_update_user_profile(auth_client, user, admin_token):  # Use admin_token for authorization
+    updated_data = {
+        "nickname": "amy123",  # Update nickname
+        "first_name": "amy",  # Update first name
+        "last_name": "ruiz",  # Update last name
+        "email": "amyruiz@example.com",  # Update email
+        "location": "California, USA",  # Update location
+    }
+    headers = {"Authorization": f"Bearer {admin_token}"}  # Use admin_token for authorization
+    response = await auth_client.put(f"/users/{user.id}/profile", json=updated_data, headers=headers)
+    
     assert response.status_code == 200
-    assert response.json()["location"] == "San Francisco, USA"
+    updated_user = response.json()
+    assert updated_user["nickname"] == updated_data["nickname"]
+    assert updated_user["first_name"] == updated_data["first_name"]
+    assert updated_user["last_name"] == updated_data["last_name"]
+    assert updated_user["email"] == updated_data["email"]
+    assert updated_user["location"] == updated_data["location"]
 
 @pytest.mark.asyncio
-async def test_update_profile_invalid_input(auth_client, sample_user):
+async def test_update_profile_invalid_input(auth_client, user, admin_token):  # Use admin_token for authorization
     """Test updating a user profile with invalid input."""
-    response = await auth_client.put(f"/users/{sample_user.id}/profile", json={"is_professional": "not_a_boolean"})
+    headers = {"Authorization": f"Bearer {admin_token}"}  # Use admin_token for authorization
+    response = await auth_client.put(
+        f"/users/{user.id}/profile", json={"is_professional": "not_a_boolean"}, headers=headers
+    )
     assert response.status_code == 400
 
 @pytest.mark.asyncio
-async def test_upgrade_to_professional_success(auth_admin_client, sample_user):
+async def test_upgrade_to_professional_success(auth_client, user, admin_token):
     """Test upgrading a user to professional status with admin privileges."""
-    response = await auth_admin_client.put(f"/users/{sample_user.id}/upgrade")
+    headers = {"Authorization": f"Bearer {admin_token}"}  # Use admin_token for authorization
+    response = await auth_client.put(f"/users/{user.id}/upgrade", headers=headers)
+    
     assert response.status_code == 200
     assert response.json()["is_professional"] is True
 
 @pytest.mark.asyncio
-async def test_upgrade_to_professional_permission_denied(auth_client, sample_user):
+async def test_upgrade_to_professional_permission_denied(auth_client, user):
     """Test upgrading a user to professional status without sufficient permissions."""
-    response = await auth_client.put(f"/users/{sample_user.id}/upgrade")
+    # Use regular auth_client here (implicitly using a non-admin token)
+    response = await auth_client.put(f"/users/{user.id}/upgrade")
+    
     assert response.status_code == 403

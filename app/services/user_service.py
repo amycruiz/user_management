@@ -76,7 +76,6 @@ class UserService:
     @classmethod
     async def update(cls, session: AsyncSession, user_id: UUID, update_data: Dict[str, str]) -> Optional[User]:
         try:
-            # validated_data = UserUpdate(**update_data).dict(exclude_unset=True)
             validated_data = UserUpdate(**update_data).dict(exclude_unset=True)
 
             if 'password' in validated_data:
@@ -192,18 +191,6 @@ class UserService:
             await session.commit()
             return True
         return False
-    
-    @classmethod
-    async def update_profile(cls, session: AsyncSession, user_id: UUID, profile_data: Dict[str, str]) -> Optional[User]:
-        try:
-            validated_data = UserUpdate(**profile_data).dict(exclude_unset=True)
-            query = update(User).where(User.id == user_id).values(**validated_data).execution_options(synchronize_session="fetch")
-            await cls._execute_query(session, query)
-            updated_user = await cls.get_by_id(session, user_id)
-            return updated_user
-        except Exception as e:
-            logger.error(f"Error updating profile: {e}")
-            return None
 
     @classmethod
     async def upgrade_to_professional(cls, session: AsyncSession, user_id: UUID) -> Optional[User]:
