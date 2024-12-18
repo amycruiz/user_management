@@ -141,9 +141,9 @@ async def test_update_user_role(db_session: AsyncSession, user: User):
     assert user.role == UserRole.ADMIN, "Role update should persist correctly in the database"
 
 @pytest.mark.asyncio
-async def test_location_field(db_session: AsyncSession, user_factory):
+async def test_location_field(db_session: AsyncSession, user: User):
     """Test that the location field is stored correctly."""
-    user = user_factory(location="New York, USA")
+    user.location = "New York, USA"
     db_session.add(user)
     await db_session.commit()
     await db_session.refresh(user)
