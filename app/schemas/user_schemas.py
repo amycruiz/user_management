@@ -27,6 +27,8 @@ class UserBase(BaseModel):
     linkedin_profile_url: Optional[str] =Field(None, example="https://linkedin.com/in/johndoe")
     github_profile_url: Optional[str] = Field(None, example="https://github.com/johndoe")
     role: UserRole
+    location: Optional[str] = Field(None, example="New York, USA")
+    is_professional: Optional[bool] = Field(default=False, example=True)
 
     _validate_urls = validator('profile_picture_url', 'linkedin_profile_url', 'github_profile_url', pre=True, allow_reuse=True)(validate_url)
  
@@ -47,6 +49,8 @@ class UserUpdate(UserBase):
     linkedin_profile_url: Optional[str] =Field(None, example="https://linkedin.com/in/johndoe")
     github_profile_url: Optional[str] = Field(None, example="https://github.com/johndoe")
     role: Optional[str] = Field(None, example="AUTHENTICATED")
+    location: Optional[str] = Field(None, example="New York, USA")
+    is_professional: Optional[bool] = Field(default=False, example=True)
 
     @root_validator(pre=True)
     def check_at_least_one_value(cls, values):
@@ -60,6 +64,7 @@ class UserResponse(UserBase):
     nickname: Optional[str] = Field(None, min_length=3, pattern=r'^[\w-]+$', example=generate_nickname())    
     is_professional: Optional[bool] = Field(default=False, example=True)
     role: UserRole
+    location: Optional[str] = Field(None, example="New York, USA")
 
 class LoginRequest(BaseModel):
     email: str = Field(..., example="john.doe@example.com")
@@ -76,7 +81,9 @@ class UserListResponse(BaseModel):
         "last_name": "Doe", "bio": "Experienced developer", "role": "AUTHENTICATED",
         "profile_picture_url": "https://example.com/profiles/john.jpg", 
         "linkedin_profile_url": "https://linkedin.com/in/johndoe", 
-        "github_profile_url": "https://github.com/johndoe"
+        "github_profile_url": "https://github.com/johndoe",
+        "location": "New York, USA",
+        "is_professional": False
     }])
     total: int = Field(..., example=100)
     page: int = Field(..., example=1)

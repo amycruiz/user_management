@@ -31,7 +31,7 @@ def upgrade() -> None:
     sa.Column('profile_picture_url', sa.String(length=255), nullable=True),
     sa.Column('linkedin_profile_url', sa.String(length=255), nullable=True),
     sa.Column('github_profile_url', sa.String(length=255), nullable=True),
-    sa.Column('role', sa.Enum('ANONYMOUS', 'AUTHENTICATED', 'MANAGER', 'ADMIN', name='UserRole'), nullable=False),
+    sa.Column('role', sa.Enum('ANONYMOUS', 'AUTHENTICATED', 'MANAGER', 'ADMIN', 'PROFESSIONAL', name='UserRole'), nullable=False),
     sa.Column('is_professional', sa.Boolean(), nullable=True),
     sa.Column('professional_status_updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('last_login_at', sa.DateTime(timezone=True), nullable=True),
@@ -42,6 +42,7 @@ def upgrade() -> None:
     sa.Column('verification_token', sa.String(), nullable=True),
     sa.Column('email_verified', sa.Boolean(), nullable=False),
     sa.Column('hashed_password', sa.String(length=255), nullable=False),
+    sa.Column('location', sa.String(length=255), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)

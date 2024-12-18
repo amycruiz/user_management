@@ -11,6 +11,7 @@ from app.models.user_model import User
 from app.schemas.user_schemas import UserCreate, UserUpdate
 from app.utils.nickname_gen import generate_nickname
 from app.utils.security import generate_verification_token, hash_password, verify_password
+from app.utils.template_manager import TemplateManager
 from uuid import UUID
 from app.services.email_service import EmailService
 from app.models.user_model import UserRole
@@ -75,7 +76,6 @@ class UserService:
     @classmethod
     async def update(cls, session: AsyncSession, user_id: UUID, update_data: Dict[str, str]) -> Optional[User]:
         try:
-            # validated_data = UserUpdate(**update_data).dict(exclude_unset=True)
             validated_data = UserUpdate(**update_data).dict(exclude_unset=True)
 
             if 'password' in validated_data:
@@ -191,3 +191,19 @@ class UserService:
             await session.commit()
             return True
         return False
+
+    @classmethod
+    async def upgrade_to_professional(cls, session: AsyncSession, user_id: UUID) -> Optional[User]:
+        user = await cls.get_by_id(session, user_id)
+        if user:
+            user.is_professional = True
+            session.add(user)
+            await session.commit()
+            email_service = EmailService(TemplateManager())
+            try: 
+                await email_service.send_user_email({"name": user.first_name, "email": user.email}, "professional_upgrade")
+            except Exception as e:
+                print(f"Error sending email: {e}")
+                return user
+            return user
+        return None

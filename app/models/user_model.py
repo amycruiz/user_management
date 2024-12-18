@@ -6,7 +6,7 @@ from sqlalchemy import (
     Column, String, Integer, DateTime, Boolean, func, Enum as SQLAlchemyEnum
 )
 from sqlalchemy.dialects.postgresql import UUID, ENUM
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, validates
 from app.database import Base
 
 class UserRole(Enum):
@@ -15,6 +15,7 @@ class UserRole(Enum):
     AUTHENTICATED = "AUTHENTICATED"
     MANAGER = "MANAGER"
     ADMIN = "ADMIN"
+    PROFESSIONAL = "PROFESSIONAL"
 
 class User(Base):
     """
@@ -73,7 +74,13 @@ class User(Base):
     verification_token = Column(String, nullable=True)
     email_verified: Mapped[bool] = Column(Boolean, default=False, nullable=False)
     hashed_password: Mapped[str] = Column(String(255), nullable=False)
+    location: Mapped[str] = Column(String(255), nullable=True)
 
+    @validates("is_professional")
+    def validate_is_professional(self, key, value):
+        if not isinstance(value, bool):
+            raise ValueError("is_professional must be a boolean value")
+        return value
 
     def __repr__(self) -> str:
         """Provides a readable representation of a user object."""

@@ -1,8 +1,10 @@
 from builtins import str
 import pytest
 from httpx import AsyncClient
+from tests.conftest import async_client
 from app.main import app
 from app.models.user_model import User, UserRole
+from app.services.user_service import UserService
 from app.utils.nickname_gen import generate_nickname
 from app.utils.security import hash_password
 from app.services.jwt_service import decode_token  # Import your FastAPI app
@@ -190,3 +192,20 @@ async def test_list_users_unauthorized(async_client, user_token):
         headers={"Authorization": f"Bearer {user_token}"}
     )
     assert response.status_code == 403  # Forbidden, as expected for regular user
+
+@pytest.mark.asyncio
+async def test_upgrade_to_professional_success(auth_client, user, admin_token):
+    """Test upgrading a user to professional status with admin privileges."""
+    headers = {"Authorization": f"Bearer {admin_token}"}  # Use admin_token for authorization
+    response = await auth_client.put(f"/users/{user.id}/upgrade", headers=headers)
+    
+    assert response.status_code == 200
+    assert response.json()["is_professional"] is True
+
+@pytest.mark.asyncio
+async def test_upgrade_to_professional_permission_denied(auth_client, user):
+    """Test upgrading a user to professional status without sufficient permissions."""
+    # Use regular auth_client here (implicitly using a non-admin token)
+    response = await auth_client.put(f"/users/{user.id}/upgrade")
+    
+    assert response.status_code == 403

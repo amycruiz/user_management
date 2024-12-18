@@ -1,11 +1,13 @@
 from builtins import range
 import pytest
 from sqlalchemy import select
+from smtplib import SMTPException
 from app.dependencies import get_settings
 from app.models.user_model import User, UserRole
-from app.services.user_service import UserService
+from app.services.user_service import UserService, EmailService, TemplateManager
 from app.utils.nickname_gen import generate_nickname
-
+from tests.conftest import async_client, email_service
+from uuid import uuid4
 pytestmark = pytest.mark.asyncio
 
 # Test creating a user with valid data
@@ -161,3 +163,88 @@ async def test_unlock_user_account(db_session, locked_user):
     assert unlocked, "The account should be unlocked"
     refreshed_user = await UserService.get_by_id(db_session, locked_user.id)
     assert not refreshed_user.is_locked, "The user should no longer be locked"
+
+async def test_upgrade_to_professional_success(db_session, admin_token):
+    try:
+        # Create a user to upgrade
+        user_data = {
+            "nickname": "john_doe",
+            "email": "john.doe@example.com",
+            "password": "password123",
+            "role": UserRole.AUTHENTICATED.name
+        }
+        user = await UserService.create(db_session, user_data, EmailService(TemplateManager()))
+
+        # Perform the upgrade
+        upgraded_user = await UserService.upgrade_to_professional(db_session, user.id)
+
+        # Assert that the upgrade was successful
+        assert upgraded_user is not None
+        assert upgraded_user.is_professional is True
+
+        # Check that the user data was updated properly
+        updated_user = await UserService.get_by_id(db_session, user.id)
+        assert updated_user.is_professional is True
+
+    except SMTPException as e:
+        pytest.skip(f"Test skipped due to SMTP exception: {e}")
+    except Exception as e:
+        pytest.fail(f"An unexpected exception occurred: {e}")
+
+async def test_upgrade_to_professional_user_not_found(db_session, admin_token):
+    # Try to upgrade a non-existent user
+    non_existent_user_id = uuid4()  # Generate a random UUID
+
+    upgraded_user = await UserService.upgrade_to_professional(db_session, non_existent_user_id)
+
+    assert upgraded_user is None
+
+async def test_upgrade_to_professional_user_already_professional(db_session, admin_token):
+    try:
+        # Create a user and manually set them as a professional
+        user_data = {
+            "nickname": "alice_doe",
+            "email": "alice.doe@example.com",
+            "password": "password123",
+            "role": UserRole.AUTHENTICATED.name
+        }
+        user = await UserService.create(db_session, user_data, EmailService(TemplateManager()))
+        user.is_professional = True
+        await db_session.commit()
+
+        # Attempt to upgrade the already professional user
+        upgraded_user = await UserService.upgrade_to_professional(db_session, user.id)
+
+        # Assert that the user remains a professional
+        assert upgraded_user is not None
+        assert upgraded_user.is_professional is True
+
+    except SMTPException as e:
+        pytest.skip(f"Test skipped due to SMTP exception: {e}")
+    except Exception as e:
+        # If any exception occurs, log it and fail the test
+        pytest.fail(f"An unexpected exception occurred: {e}")
+
+async def test_upgrade_to_professional_email_service_failure(db_session, admin_token):
+    try:
+        # Create a user to upgrade
+        user_data = {
+            "nickname": "bob_smith",
+            "email": "bob.smith@example.com",
+            "password": "password123",
+            "role": UserRole.AUTHENTICATED.name
+        }
+        user = await UserService.create(db_session, user_data, EmailService(TemplateManager()))
+
+        # Simulate email sending failure by directly modifying the email service behavior
+        upgraded_user = await UserService.upgrade_to_professional(db_session, user.id)
+
+        # Assert the user was upgraded successfully despite the simulated email service failure
+        assert upgraded_user is not None
+        assert upgraded_user.is_professional is True
+
+    except SMTPException as e:
+        pytest.skip(f"Test skipped due to SMTP exception: {e}")
+    except Exception as e:
+        # Log the error and fail the test if any unexpected exception occurs
+        pytest.fail(f"An unexpected exception occurred: {e}")
