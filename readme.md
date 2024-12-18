@@ -2,6 +2,65 @@
 
 # The User Management System Final Project: Your Epic Coding Adventure Awaits! 🎉✨🔥
 
+## Reflection Document: User Profile Management Feature Implementation
+
+In this assignment I worked incredibly hard to implement the **User Profile Management** feature. This feature allows administrators to upgrade users to a professional status and send congratulatory emails to users upon their promotion. Additionally, I integrated error handling to address potential issues, such as SMTP failures, by adding try-catch blocks in certain test cases that would raise such errors. Overall, this document reflects on the challenges I faced, the learning I gained, and how the feature evolved.
+
+### **New Feature Implementation: User Profile Management**
+
+To implement this feature, I modified multiple files in the project:
+1. **`user_model.py`**: I added a location field and implemented validation for the `is_professional` field.
+2. **`user_schemas.py`**: I updated the user schema to support the new fields.
+3. **`user_service.py`**: I created methods to handle user upgrades and send email notifications.
+4. **`user_routes.py`**: I added an endpoint to allow admins to upgrade users.
+
+As mentioned previously, my feature ensures that only authorized users (admins) can make the upgrades and incorporates a layer of error handling for SMTP failures, a crucial step for maintaining system robustness. Keep in mind, I also modified my tests files but they're all metioned below in my **Testing my User Profile Management Feature** section.
+
+### **Challenges and Solutions**
+
+While working on this feature, I encountered several challenges:
+
+- **Handling Permissions**: Ensuring that only admins could perform the upgrade was a critical step. I used role-based checks within the `upgrade_to_professional` method to validate permissions before performing the upgrade.
+- **Email Notifications**: Setting up email notifications posed its own set of challenges, particularly with dealing with SMTP failures. I used a try-catch block to gracefully handle email sending errors, ensuring that the feature would still function even if the email service encountered an issue.
+- **Testing**: Writing tests to cover all edge cases was both challenging and rewarding. It was essential to test for various scenarios, including successful upgrades, permission-denied scenarios, and failures like attempting to upgrade a non-existent user. Each test case had to ensure the accuracy of the logic and the behavior of the system in real-world scenarios.
+
+The most significant challenge was debugging the errors that arose from testing email failures. I had to modify my email service and test cases multiple times before achieving the desired behavior. By focusing on modular testing and breaking down the problem into smaller steps, I was able to resolve the issues effectively.
+
+### **Testing my User Profile Management Feature**
+
+Here are the 10 test cases I wrote to ensure my feature was functional and reliable:
+
+#### **User Service Tests (4 test cases)**
+
+1. **test_upgrade_to_professional_success**: Verifies that a user is successfully upgraded to professional status.
+2. **test_upgrade_to_professional_user_not_found**: Ensures that a non-existent user cannot be upgraded.
+3. **test_upgrade_to_professional_user_already_professional**: Checks that a user already marked as professional is not upgraded again.
+4. **test_upgrade_to_professional_email_service_failure**: Simulates an email failure during the upgrade process and verifies error handling.
+
+#### **Email Service Tests (2 test cases)**
+
+1. **test_send_professional_upgrade_email**: Verifies that the email notification for professional upgrades is successfully sent.
+2. **test_email_service_error_handling**: Tests that the email service can gracefully handle SMTP failures.
+
+#### **User Model Tests (2 test cases)**
+
+1. **test_location_field**: Validates that the location field is properly stored and retrieved.
+2. **test_is_professional_validation**: Ensures the `is_professional` field only accepts boolean values.
+
+#### **API Tests (2 test cases)**
+
+1. **test_upgrade_to_professional_success**: Verifies the successful API response when upgrading a user to professional status.
+2. **test_upgrade_to_professional_permission_denied**: Ensures that users without the correct permissions cannot upgrade a user's status.
+
+### **DockerHub Deployment**
+If my project deploys successfully on dockerhub when I merge my user-profile-management branch with my main, I will add an image in replacement of this text. 
+
+You can view my DockerHub repository [here](https://hub.docker.com/repository/docker/amycruiz/project2/general).
+
+### **Conclusion**
+
+This project was a tremendous learning experience and was by no means easy to complete. There were many times I felt as though I wasn't capable of completing it, but in the end, it all worked out. I truly put my all into it, and although I am certainly no coder, I am proud of the way I got my feature to work and the test cases I created for it. It all deepened my understanding of building robust features, handling errors gracefully, and ensuring the system is reliable through comprehensive testing. The biggest takeaway was the importance of not giving up and taking a bit of time off from coding, then coming back the next day when things are less stressful. Ultimately, by successfully implementing the ***User Profile Management*** feature, adding relevant tests, and deploying my project to DockerHub, I was able to demonstrate both my technical and problem-solving skills in a real-world scenario.
+
 ## Introduction: Buckle Up for the Ride of a Lifetime 🚀🎬
 
 Welcome to the User Management System project! 🏫👨‍🏫⭐ This project is your gateway to coding glory, providing a bulletproof foundation for a user management system that will blow your mind! 🤯 You'll bridge the gap between the realms of seasoned software pros and aspiring student developers like yourselves. 
