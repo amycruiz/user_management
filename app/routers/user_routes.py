@@ -113,9 +113,6 @@ async def update_user(user_id: UUID, user_update: UserUpdate, request: Request, 
 
 @router.put("/users/{user_id}/upgrade", response_model=UserResponse, name="upgrade_user_to_professional", tags=["User Management Requires (Admin or Manager Roles)"])
 async def upgrade_to_professional(user_id: UUID, db: AsyncSession = Depends(get_db), current_user: dict = Depends(require_role(["ADMIN", "MANAGER"])), email_service: EmailService = Depends(get_email_service)):  # Inject EmailService
-    # Check if current user has permission
-    if current_user["role"] not in [UserRole.ADMIN, UserRole.MANAGER]:
-        raise HTTPException(status_code=403, detail="Insufficient permissions")
 
     # Attempt to upgrade the user
     upgraded_user = await UserService.upgrade_to_professional(db, user_id)
