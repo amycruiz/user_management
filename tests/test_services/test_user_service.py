@@ -227,25 +227,4 @@ async def test_upgrade_to_professional_email_service_failure(db_session, admin_t
     except Exception as e:
         # Handle email service failure gracefully
         print(f"Email service error during upgrade: {e}")
-        assert True  # You can assert true if this simulates an error logging
-
-'''
-async def test_upgrade_to_professional_without_permissions(db_session, user_token): 
-    # Create a user to upgrade
-    user_data = {
-        "nickname": "jane_doe",
-        "email": "jane.doe@example.com",
-        "password": "password123",
-        "role": UserRole.AUTHENTICATED.name
-    }
-    user = await UserService.create(db_session, user_data, EmailService(TemplateManager()))
-
-    # Attempt to upgrade a user with insufficient permissions (e.g., using a regular user token)
-    response = await async_client.put(
-        f"/users/{user.id}/upgrade",
-        headers={"Authorization": f"Bearer {user_token}"}
-    )
-
-    assert response.status_code == 403
-    assert response.json() == {"detail": "Operation not permitted"}
-'''
+        assert True
