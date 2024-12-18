@@ -53,7 +53,8 @@ Here are the 10 test cases I wrote to ensure my feature was functional and relia
 2. **test_upgrade_to_professional_permission_denied**: Ensures that users without the correct permissions cannot upgrade a user's status.
 
 ### **DockerHub Deployment**
-If my project deploys successfully on dockerhub when I merge my user-profile-management branch with my main, I will add an image in replacement of this text. 
+
+![Dockerhub Successful Deployment Image](https://github.com/user-attachments/assets/62516789-837a-44b2-8bda-c4615c93216f)
 
 You can view my DockerHub repository [here](https://hub.docker.com/repository/docker/amycruiz/project2/general).
 
