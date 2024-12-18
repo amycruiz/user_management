@@ -118,19 +118,6 @@ async def upgrade_to_professional(user_id: UUID, db: AsyncSession = Depends(get_
     upgraded_user = await UserService.upgrade_to_professional(db, user_id)
     if not upgraded_user:
         raise HTTPException(status_code=404, detail="User not found")
-
-    # Prepare email data and send email notification
-    email_data = {
-        "name": upgraded_user.first_name,
-        "email": upgraded_user.email,
-    }
-    try:
-        await email_service.send_user_email(email_data, 'professional_upgrade')
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"User upgraded but failed to send email: {str(e)}"
-        )
     return upgraded_user
 
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT, name="delete_user", tags=["User Management Requires (Admin or Manager Roles)"])
